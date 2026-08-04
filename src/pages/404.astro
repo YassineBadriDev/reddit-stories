@@ -1,0 +1,21 @@
+---
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout
+  title="Page not found"
+  description="The page you were looking for could not be found. Browse the latest reddit stories instead."
+  path="/404"
+  noindex={true}
+>
+  <article class="reading">
+    <h1>Page not found</h1>
+    <p>
+      That page doesn't exist — but the latest reddit stories are waiting for
+      you.
+    </p>
+    <p>
+      <a class="btn btn--primary" href="/">Read reddit stories</a>
+    </p>
+  </article>
+</Layout>

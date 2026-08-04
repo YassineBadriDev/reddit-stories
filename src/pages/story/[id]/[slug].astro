@@ -1,0 +1,103 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import NewsletterForm from "@/components/NewsletterForm.astro";
+import CommentItem from "@/components/CommentItem.astro";
+import { fetchStoryById, flattenComments } from "@/lib/scraper";
+import { storySchema, breadcrumbSchema } from "@/lib/seo/schemas";
+
+export const prerender = false;
+
+const { id } = Astro.params;
+if (!id) {
+  throw new Error("Missing story id");
+}
+
+const { story, comments } = await fetchStoryById(id);
+const unavailable = story.title === "Story not available";
+
+if (unavailable) {
+  Astro.response.status = 404;
+}
+
+const commentCount = flattenComments(comments).length;
+const dateLabel = new Date(story.createdAt).toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+const canonicalPath = `/story/${story.id}/${story.slug}`;
+const schemas = unavailable
+  ? []
+  : [
+      storySchema(story),
+      breadcrumbSchema([
+        { name: "Reddit Stories", url: "/" },
+        { name: story.title },
+      ]),
+    ];
+
+---
+
+<Layout
+  title={unavailable ? "Story not found" : story.title}
+  description={unavailable ? "This reddit story could not be found." : story.excerpt}
+  path={canonicalPath}
+  type="article"
+  noindex={unavailable}
+  schemas={schemas}
+>
+  {unavailable ? (
+    <article class="reading">
+      <h1>This reddit story could not be found</h1>
+      <p>
+        The story you're looking for may have been removed, or is no longer
+        available through the public data we read from.
+      </p>
+      <p>
+        <a class="btn btn--primary" href="/">Browse the latest reddit stories</a>
+      </p>
+    </article>
+  ) : (
+    <article class="reading">
+      <div class="reading__kicker">
+        <a href="/" style="color:inherit;">Reddit Stories</a>
+      </div>
+
+      <h1>{story.title}</h1>
+
+      <div class="reading__meta">
+        <span>by <b>{story.author}</b></span>
+        <span><b>{story.score.toLocaleString()}</b> upvotes</span>
+        <span><b>{story.comments.toLocaleString()}</b> comments</span>
+        <span>{dateLabel}</span>
+      </div>
+
+      <div class="reading__body">
+        <p>{story.selftext}</p>
+      </div>
+
+      <p class="ornament" aria-hidden="true">&#10087;</p>
+
+      <p class="reading__source">
+        This is a reddit story originally posted by <b>{story.author}</b>.
+        RedditStories.org is not affiliated with Reddit Inc.
+      </p>
+
+      {comments.length > 0 && (
+        <section class="comments" aria-label="Comments">
+          <h2>
+            {commentCount > 0
+              ? `${commentCount} comment${commentCount === 1 ? "" : "s"}`
+              : "Comments"}
+          </h2>
+          {comments.map((comment) => (
+            <CommentItem comment={comment} />
+          ))}
+        </section>
+      )}
+
+      <NewsletterForm id={`newsletter-${story.id}`} />
+    </article>
+  )}
+</Layout>

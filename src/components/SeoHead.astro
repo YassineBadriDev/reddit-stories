@@ -1,0 +1,59 @@
+---
+import { site } from "@/lib/seo/site";
+import { websiteSchema } from "@/lib/seo/schemas";
+import JsonLd from "./JsonLd.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  image?: string;
+  type?: "website" | "article";
+  noindex?: boolean;
+  schemas?: object[];
+}
+
+const {
+  title,
+  description,
+  path,
+  image = site.ogImage,
+  type = "website",
+  noindex = false,
+  schemas = [],
+} = Astro.props;
+
+const fullTitle = title
+  .toLowerCase()
+  .includes("reddit stories")
+  ? title
+  : `${title} | Reddit Stories`;
+const url = `${site.url}${path}`;
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large"} />
+<link rel="canonical" href={url} />
+<meta name="keywords" content={site.keywords} />
+
+<meta property="og:site_name" content={site.name} />
+<meta property="og:type" content={type} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={url} />
+<meta property="og:image" content={image} />
+<meta property="og:locale" content="en_US" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={image} />
+
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.json" />
+
+<JsonLd schemas={[websiteSchema(), ...schemas]} />

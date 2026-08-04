@@ -1,0 +1,28 @@
+---
+import type { StoryComment } from "@/lib/scraper/types";
+
+interface Props {
+  comment: StoryComment;
+}
+
+const { comment } = Astro.props;
+const nested = comment.depth > 0;
+---
+
+<div class:list={["comment", { "comment--nested": nested }]}>
+  <div class="comment__body">
+    <p>{comment.body}</p>
+    <div class="comment__meta">
+      <span>{comment.author}</span>
+      <span>
+        {new Date(comment.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })}
+      </span>
+      <span>{comment.score.toLocaleString()} pts</span>
+    </div>
+  </div>
+  {comment.replies.length > 0 &&
+    comment.replies.map((reply) => <Astro.self comment={reply} />)}
+</div>

@@ -1,0 +1,74 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import StoryCard from "@/components/StoryCard.astro";
+import { fetchStories } from "@/lib/scraper";
+
+export const prerender = false;
+
+const q = (Astro.url.searchParams.get("q") ?? "").trim();
+const hasQuery = q.length > 0;
+
+let results: Awaited<ReturnType<typeof fetchStories>> = [];
+if (hasQuery) {
+  const stories = await fetchStories();
+  const needle = q.toLowerCase();
+  results = stories
+    .filter((story) => {
+      const haystack = `${story.title} ${story.subreddit} ${story.author} ${story.excerpt}`.toLowerCase();
+      return haystack.includes(needle);
+    })
+    .slice(0, 40);
+}
+---
+
+<Layout
+  title="Search Reddit Stories"
+  description="Search reddit stories by title or author. Find the exact reddit story you're looking for."
+  path="/search"
+  noindex={hasQuery}
+>
+  <section class="hero">
+    <h1>Search Reddit <span class="accent">Stories</span></h1>
+    <p>
+      Search reddit stories by title or author from the stories we have on
+      file.
+    </p>
+  </section>
+
+  <div class="wrap">
+    <form action="/search" method="get" role="search" style="max-width:560px;margin:0 auto 32px;">
+      <div style="display:flex;gap:10px;">
+        <input
+          type="search"
+          name="q"
+          value={q}
+          placeholder="Search reddit stories…"
+          aria-label="Search reddit stories"
+          style="flex:1;font-family:var(--font-ui);font-size:15px;padding:12px 16px;border-radius:12px;border:1px solid var(--line-strong);background:var(--card);color:var(--ink);"
+        />
+        <button class="btn btn--dark" type="submit">Search</button>
+      </div>
+    </form>
+
+    {hasQuery && (
+      <>
+        <div class="section-head">
+          <h2>{results.length} result{results.length === 1 ? "" : "s"} for &ldquo;{q}&rdquo;</h2>
+        </div>
+        {results.length > 0 ? (
+          <div class="story-grid">
+            {results.map((story, index) => (
+              <StoryCard story={story} rank={index + 1} />
+            ))}
+          </div>
+        ) : (
+          <p style="font-family:var(--font-reading);color:var(--ink-soft);padding-bottom:48px;">
+            No matching reddit stories found. Try a different title or
+            author, or browse the{" "}
+            <a href="/">latest reddit stories</a>.
+          </p>
+        )}
+      </>
+    )}
+  </div>
+</Layout>

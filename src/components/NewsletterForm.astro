@@ -1,0 +1,102 @@
+---
+interface Props {
+  id?: string;
+}
+
+const { id = "newsletter" } = Astro.props;
+---
+
+<section class="newsletter" id={id}>
+  <h2>Get the latest reddit stories by email</h2>
+  <p>
+    One email a day with the top reddit stories we've found. Unsubscribe
+    anytime.
+  </p>
+  <form class="newsletter__form" data-newsletter-form>
+    <label class="sr-only" for={`nl-email-${id}`}>Email address</label>
+    <input
+      id={`nl-email-${id}`}
+      type="email"
+      name="email"
+      placeholder="you@example.com"
+      autocomplete="email"
+      required
+    />
+    <input
+      type="text"
+      name="website"
+      class="sr-only"
+      tabindex="-1"
+      autocomplete="off"
+      aria-hidden="true"
+    />
+    <button class="btn btn--primary" type="submit">Subscribe</button>
+  </form>
+  <p class="newsletter__note">
+    No spam. Unsubscribe in one click. Read our{" "}
+    <a href="/privacy" style="color:#d4a017;">Privacy Policy</a>.
+  </p>
+  <p class="newsletter__status" data-newsletter-status role="status"></p>
+</section>
+
+<style>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>("[data-newsletter-form]");
+  const status = document.querySelector<HTMLParagraphElement>(
+    "[data-newsletter-status]"
+  );
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submit = form.querySelector<HTMLButtonElement>("button[type=submit]");
+    if (!submit) return;
+    submit.disabled = true;
+    submit.textContent = "Subscribing…";
+    status!.textContent = "";
+
+    const formData = new FormData(form);
+    if (formData.get("website")) {
+      status!.textContent = "Submission rejected.";
+      submit.disabled = false;
+      submit.textContent = "Subscribe";
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.get("email") }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        status!.textContent =
+          "You're in. The latest reddit stories are on their way.";
+        status!.style.color = "#a3c9a0";
+        form.reset();
+      } else {
+        status!.textContent = data?.error ?? "Something went wrong. Try again.";
+        status!.style.color = "#e0b49f";
+      }
+    } catch {
+      status!.textContent = "Network error. Please try again.";
+      status!.style.color = "#e0b49f";
+    } finally {
+      submit.disabled = false;
+      submit.textContent = "Subscribe";
+    }
+  });
+</script>

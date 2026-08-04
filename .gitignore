@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+.astro/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# data (runtime subscribers/cache)
+data/*.json
+!data/.gitkeep
+
+# logs
+*.log
+*.log.*
+npm-debug.log*
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

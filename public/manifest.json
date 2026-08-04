@@ -1,0 +1,13 @@
+{
+  "name": "Reddit Stories",
+  "short_name": "Reddit Stories",
+  "description": "Reddit stories, in one place. Read the best reddit stories from the biggest story subreddits.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf6ef",
+  "theme_color": "#2b2320",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 96" role="img" aria-label="Reddit Stories logo">
+  <rect x="6" y="16" width="64" height="64" rx="14" fill="#2B2320"/>
+  <path d="M38 27 52 41 H45 V49 H31 V41 H24 Z" fill="#D4A017"/>
+  <path d="M38 55 C33 53 27 53 22 55 V71 C27 69 33 69 38 71 Z" fill="#FAF6EF"/>
+  <path d="M38 55 C43 53 49 53 54 55 V71 C49 69 43 69 38 71 Z" fill="#FAF6EF"/>
+  <path d="M38 55 V71" stroke="#D4A017" stroke-width="2"/>
+  <text x="90" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="34" font-weight="700" fill="#2B2320">Reddit<tspan fill="#D4A017"> Stories</tspan></text>
+</svg>

@@ -1,0 +1,68 @@
+---
+import LegalLayout from "@/components/LegalLayout.astro";
+
+const emailParam = Astro.url.searchParams.get("email") ?? "";
+---
+
+<LegalLayout
+  title="Unsubscribe"
+  description="Unsubscribe from the Reddit Stories email newsletter in one click."
+  path="/unsubscribe"
+  noindex={true}
+  updated="January 1, 2026"
+>
+  <p>
+    Sorry to see you go. Enter your email below to stop receiving the reddit
+    stories newsletter. You can re-subscribe anytime.
+  </p>
+
+  <form data-unsubscribe-form style="margin-top:24px;max-width:420px;">
+    <div class="field">
+      <label for="unsub-email">Email</label>
+      <input
+        id="unsub-email"
+        name="email"
+        type="email"
+        autocomplete="email"
+        required
+        value={emailParam}
+      />
+    </div>
+    <button class="btn btn--dark" type="submit">Unsubscribe</button>
+    <p class="form-status" data-unsub-status role="status"></p>
+  </form>
+</LegalLayout>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>("[data-unsubscribe-form]");
+  const status = document.querySelector<HTMLParagraphElement>("[data-unsub-status]");
+  const button = form?.querySelector<HTMLButtonElement>("button[type=submit]");
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!button) return;
+    button.disabled = true;
+    status!.textContent = "";
+    try {
+      const response = await fetch("/api/unsubscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: new FormData(form).get("email"),
+        }),
+      });
+      if (response.ok) {
+        status!.textContent = "You have been unsubscribed.";
+        status!.className = "form-status form-status--ok";
+      } else {
+        status!.textContent = "That didn't work. Please try again.";
+        status!.className = "form-status form-status--err";
+      }
+    } catch {
+      status!.textContent = "Network error. Please try again.";
+      status!.className = "form-status form-status--err";
+    } finally {
+      button.disabled = false;
+    }
+  });
+</script>

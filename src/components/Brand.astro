@@ -1,0 +1,27 @@
+---
+interface Props {
+  compact?: boolean;
+}
+
+const { compact = false } = Astro.props;
+---
+
+<a class="brand" href="/" aria-label="Reddit Stories — home">
+  <img
+    class:list={["brand__mark", { "brand__mark--compact": compact }]}
+    src="/favicon.svg"
+    alt=""
+    width="34"
+    height="34"
+  />
+  <span class="brand__name">
+    Reddit<em>Stories</em>
+  </span>
+</a>
+
+<style>
+  .brand__mark--compact {
+    width: 28px;
+    height: 28px;
+  }
+</style>

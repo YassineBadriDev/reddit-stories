@@ -1,0 +1,29 @@
+---
+import Layout from "@/layouts/Layout.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  updated: string;
+  noindex?: boolean;
+  schemas?: object[];
+}
+
+const { title, description, path, updated, noindex = false, schemas = [] } = Astro.props;
+---
+
+<Layout
+  title={title}
+  description={description}
+  path={path}
+  noindex={noindex}
+  schemas={schemas}
+>
+  <article class="prose">
+    <a class="prose__back" href="/">&larr; Back to reddit stories</a>
+    <h1>{title}</h1>
+    <p class="updated">Last updated: {updated}</p>
+    <slot />
+  </article>
+</Layout>

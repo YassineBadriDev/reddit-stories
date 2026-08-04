@@ -1,0 +1,91 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import StoryCard from "@/components/StoryCard.astro";
+import NewsletterForm from "@/components/NewsletterForm.astro";
+import { fetchStories } from "@/lib/scraper";
+import { config } from "@/lib/config";
+import { itemListSchema, breadcrumbSchema } from "@/lib/seo/schemas";
+
+export const prerender = false;
+
+const params = Astro.url.searchParams;
+const sortParam = params.get("sort");
+const sort =
+  sortParam === "top" || sortParam === "hot" || sortParam === "new"
+    ? sortParam
+    : config.defaultSort;
+
+const stories = await fetchStories({ sort });
+const hasQuery = Boolean(sortParam && sortParam !== config.defaultSort);
+
+const headings: Record<string, string> = {
+  top: "Top Reddit Stories",
+  hot: "Trending Reddit Stories",
+  new: "Latest Reddit Stories",
+};
+const sectionHeading = headings[sort];
+
+const pageDescription =
+  "Find the best reddit stories in one place. Read top, latest, and trending reddit stories from the biggest story subreddits — updated daily.";
+
+const schemas = [
+  itemListSchema(stories, "/"),
+  breadcrumbSchema([{ name: "Home", url: "/" }]),
+];
+---
+
+<Layout
+  title="Reddit Stories — Best Reddit Stories to Read"
+  description={pageDescription}
+  path="/"
+  noindex={hasQuery}
+  schemas={schemas}
+>
+  <section class="hero">
+    <p class="kicker">Know where the story takes you</p>
+    <h1>Reddit <span class="accent">Stories</span></h1>
+    <p>
+      Looking for the best reddit stories? We curate the top reddit stories
+      from Reddit's biggest story communities so you can read them all in one
+      place — free, and updated daily.
+    </p>
+  </section>
+
+  <div class="wrap">
+    <nav class="tabs" aria-label="Sort stories">
+      {(["top", "hot", "new"] as const).map((value) => (
+        <a
+          class="tab"
+          href={`/?sort=${value}`}
+          aria-current={sort === value ? "true" : undefined}
+        >
+          {value === "top" ? "Top" : value === "hot" ? "Trending" : "Latest"}
+        </a>
+      ))}
+    </nav>
+
+    <div class="section-head">
+      <h2>{sectionHeading}</h2>
+      <span class="meta">
+        {stories.length} story{stories.length === 1 ? "" : "s"} today
+      </span>
+    </div>
+
+    {stories.length > 0 ? (
+      <div class="story-grid">
+        {stories.map((story, index) => (
+          <StoryCard story={story} rank={index + 1} />
+        ))}
+      </div>
+    ) : (
+      <div class="story-grid">
+        <p>
+          We couldn't load reddit stories right now. Please check back in a few
+          minutes.
+        </p>
+      </div>
+    )}
+
+    <NewsletterForm id="newsletter" />
+  </div>
+</Layout>
