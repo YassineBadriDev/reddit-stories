@@ -1,5 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dataDir, dataFile } from "@/lib/paths";
+import { storageRead, storageWrite } from "@/lib/storage";
 
 export interface Subscriber {
   email: string;
@@ -12,8 +11,8 @@ let cached: Subscriber[] | null = null;
 async function load(): Promise<Subscriber[]> {
   if (cached) return cached;
   try {
-    const raw = await readFile(dataFile("subscribers.json"), "utf8");
-    cached = JSON.parse(raw) as Subscriber[];
+    const raw = await storageRead("subscribers.json");
+    cached = raw ? (JSON.parse(raw) as Subscriber[]) : [];
   } catch {
     cached = [];
   }
@@ -22,8 +21,7 @@ async function load(): Promise<Subscriber[]> {
 
 async function save(list: Subscriber[]): Promise<void> {
   cached = list;
-  await mkdir(dataDir(), { recursive: true });
-  await writeFile(dataFile("subscribers.json"), JSON.stringify(list, null, 2), "utf8");
+  await storageWrite("subscribers.json", JSON.stringify(list, null, 2));
 }
 
 export async function listSubscribers(): Promise<Subscriber[]> {

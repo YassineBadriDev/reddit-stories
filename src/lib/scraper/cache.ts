@@ -1,6 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { config } from "@/lib/config";
-import { dataDir, dataFile } from "@/lib/paths";
+import { storageRead, storageWrite } from "@/lib/storage";
 
 interface CacheEntry<T> {
   value: T;
@@ -8,7 +7,7 @@ interface CacheEntry<T> {
 }
 
 const memory = new Map<string, CacheEntry<unknown>>();
-const diskCacheFile = dataFile("cache.json");
+const diskCacheFile = "cache.json";
 
 let diskLoaded = false;
 
@@ -16,7 +15,8 @@ async function loadDisk(): Promise<void> {
   if (diskLoaded) return;
   diskLoaded = true;
   try {
-    const raw = await readFile(diskCacheFile, "utf8");
+    const raw = await storageRead(diskCacheFile);
+    if (!raw) return;
     const parsed = JSON.parse(raw) as Record<string, CacheEntry<unknown>>;
     for (const [key, entry] of Object.entries(parsed)) {
       if (entry.expiresAt > Date.now()) {
@@ -24,20 +24,19 @@ async function loadDisk(): Promise<void> {
       }
     }
   } catch {
-    // no disk cache yet
+    // no persisted cache yet
   }
 }
 
 async function persistDisk(): Promise<void> {
   try {
-    await mkdir(dataDir(), { recursive: true });
     const fresh: Record<string, CacheEntry<unknown>> = {};
     for (const [key, entry] of memory.entries()) {
       if (entry.expiresAt > Date.now()) {
         fresh[key] = entry;
       }
     }
-    await writeFile(diskCacheFile, JSON.stringify(fresh), "utf8");
+    await storageWrite(diskCacheFile, JSON.stringify(fresh));
   } catch {
     // persistence is best-effort
   }
@@ -67,7 +66,7 @@ export async function cacheClear(): Promise<void> {
   memory.clear();
   diskLoaded = false;
   try {
-    await writeFile(diskCacheFile, "{}", "utf8");
+    await storageWrite(diskCacheFile, "{}");
   } catch {
     // ignore
   }

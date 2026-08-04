@@ -3,7 +3,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@storage-backend": ["src/lib/storage/memory.ts"],
+      "@scraper-native": ["src/lib/scraper/native.ts"]
     },
     "moduleResolution": "bundler",
     "verbatimModuleSyntax": true,

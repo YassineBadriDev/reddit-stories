@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/build.mjs",
+    "build:node": "node scripts/build.mjs node",
+    "build:cf": "node scripts/build.mjs cloudflare",
+    "build:vercel": "node scripts/build.mjs vercel",
     "preview": "astro preview",
     "start": "node ./dist/server/entry.mjs",
     "check": "astro check",
@@ -26,10 +29,13 @@
     "resend": "^6.18.1"
   },
   "allowScripts": {
-    "esbuild@0.28.1": true
+    "esbuild@0.28.1": true,
+    "workerd@1.20260730.1": true
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@astrojs/cloudflare": "^14.1.7",
+    "@astrojs/vercel": "^11.0.4",
     "@types/node": "^26.1.2",
     "sharp": "^0.35.3",
     "typescript": "~5.9.0"

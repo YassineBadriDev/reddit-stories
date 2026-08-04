@@ -4,6 +4,7 @@ node_modules/
 # build output
 dist/
 .astro/
+.vercel/
 
 # env
 .env
@@ -18,6 +19,10 @@ data/*.json
 *.log
 *.log.*
 npm-debug.log*
+wrangler-dev.*
+
+# wrangler
+.wrangler/
 
 # os / editor
 .DS_Store
