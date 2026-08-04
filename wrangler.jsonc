@@ -4,6 +4,12 @@
   // `npx wrangler secret put <NAME>` for secrets (RESEND_API_KEY, CRON_SECRET).
   "name": "reddit-stories",
   "compatibility_date": "2026-04-15",
+  // Custom entrypoint adds a `scheduled` handler (daily cron refresh).
+  "main": "./src/worker.ts",
+  // Durable store for the once-a-day story snapshot (auto-provisioned on deploy).
+  "kv_namespaces": [{ "binding": "STORY_CACHE" }],
+  // Refresh the story snapshot twice a day: 03:00 and 15:00 UTC.
+  "triggers": { "crons": ["0 3,15 * * *"] },
   "vars": {
     "SITE_URL": "https://redditstories.org",
     "SITE_NAME": "Reddit Stories",

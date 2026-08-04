@@ -10,12 +10,14 @@ import {
 } from "./reddit";
 import { fetchMirrorListing, fetchMirrorPost, fetchMirrorComments } from "./mirror";
 import { fetchJsonEscalated } from "@scraper-native";
+import { snapshotGet, snapshotSet, SNAPSHOT_STORIES_KEY } from "@/lib/snapshot";
 import type { RedditListing, Story, StoryComment, StoryDetail } from "./types";
 
 export async function fetchStories(options?: {
   subreddits?: string[];
   sort?: "top" | "hot" | "new";
   limit?: number;
+  force?: boolean;
 }): Promise<Story[]> {
   const subreddits = options?.subreddits?.length
     ? options.subreddits
@@ -23,9 +25,24 @@ export async function fetchStories(options?: {
   const sort = options?.sort ?? config.defaultSort;
   const limit = options?.limit ?? config.defaultLimit;
 
+  const isDefaultFeed =
+    subreddits.join(",") === config.subreddits.join(",") &&
+    sort === config.defaultSort &&
+    limit === config.defaultLimit;
+
   const cacheKey = `stories:${subreddits.join(",")}:${sort}:${limit}`;
-  const cached = await cacheGet<Story[]>(cacheKey);
-  if (cached) return cached;
+
+  if (!options?.force) {
+    const cached = await cacheGet<Story[]>(cacheKey);
+    if (cached) return cached;
+    if (isDefaultFeed) {
+      const snap = await snapshotGet<Story[]>(SNAPSHOT_STORIES_KEY);
+      if (snap) {
+        void cacheSet(cacheKey, snap);
+        return snap;
+      }
+    }
+  }
 
   const mirrorOnly = config.scraperSource === "mirror";
   const results = await Promise.allSettled(
@@ -63,14 +80,28 @@ export async function fetchStories(options?: {
 
   if (unique.length > 0) {
     await cacheSet(cacheKey, unique);
+    if (isDefaultFeed) {
+      await snapshotSet(SNAPSHOT_STORIES_KEY, unique);
+    }
   }
   return unique;
 }
 
-export async function fetchStoryById(id: string): Promise<StoryDetail> {
+export async function fetchStoryById(
+  id: string,
+  options?: { force?: boolean }
+): Promise<StoryDetail> {
   const cacheKey = `story:${id}`;
-  const cached = await cacheGet<StoryDetail>(cacheKey);
-  if (cached) return cached;
+
+  if (!options?.force) {
+    const cached = await cacheGet<StoryDetail>(cacheKey);
+    if (cached) return cached;
+    const snap = await snapshotGet<StoryDetail>(`story:${id}`);
+    if (snap) {
+      void cacheSet(cacheKey, snap);
+      return snap;
+    }
+  }
 
   const unavailable: StoryDetail = {
     story: {
@@ -124,6 +155,7 @@ export async function fetchStoryById(id: string): Promise<StoryDetail> {
 
   const detail: StoryDetail = { story, comments };
   await cacheSet(cacheKey, detail);
+  await snapshotSet(`story:${id}`, detail);
   return detail;
 }
 

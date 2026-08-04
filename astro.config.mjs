@@ -19,11 +19,13 @@ const nativeAliases =
         "@storage-backend": resolve("src/lib/storage/memory.ts"),
         "@scraper-native": resolve("src/lib/scraper/native-stub.ts"),
         "@cf-env": resolve("src/lib/cf-env.ts"),
+        "@snapshot-storage": resolve("src/lib/snapshot-storage.ts"),
       }
     : {
         "@storage-backend": resolve("src/lib/storage/disk.ts"),
         "@scraper-native": resolve("src/lib/scraper/native.ts"),
         "@cf-env": resolve("src/lib/cf-env.node.ts"),
+        "@snapshot-storage": resolve("src/lib/snapshot-storage.node.ts"),
       };
 
 async function adapter() {
