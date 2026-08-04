@@ -22,6 +22,14 @@ interface Props {
 }
 
 const { title, description, path, image, type, noindex, schemas } = Astro.props;
+
+const googleTagId = import.meta.env.PUBLIC_GOOGLE_TAG ?? "G-EFDFGLK67M";
+const gtagScript = `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '${googleTagId}');
+`;
 ---
 
 <!doctype html>
@@ -39,6 +47,12 @@ const { title, description, path, image, type, noindex, schemas } = Astro.props;
       noindex={noindex}
       schemas={schemas}
     />
+    {googleTagId && (
+      <>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${googleTagId}`}></script>
+        <script is:inline set:html={gtagScript}></script>
+      </>
+    )}
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
