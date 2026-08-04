@@ -10,7 +10,7 @@ import {
 } from "./reddit";
 import { fetchMirrorListing, fetchMirrorPost, fetchMirrorComments } from "./mirror";
 import { fetchJsonEscalated } from "@scraper-native";
-import { snapshotGet, snapshotSet, SNAPSHOT_STORIES_KEY } from "@/lib/snapshot";
+import { snapshotGet, snapshotSet, mergeStoriesIntoSnapshot, SNAPSHOT_STORIES_KEY } from "@/lib/snapshot";
 import type { RedditListing, Story, StoryComment, StoryDetail } from "./types";
 
 export async function fetchStories(options?: {
@@ -79,10 +79,12 @@ export async function fetchStories(options?: {
     .slice(0, limit * 2);
 
   if (unique.length > 0) {
-    await cacheSet(cacheKey, unique);
     if (isDefaultFeed) {
-      await snapshotSet(SNAPSHOT_STORIES_KEY, unique);
+      const archive = await mergeStoriesIntoSnapshot(unique);
+      await cacheSet(cacheKey, archive);
+      return archive;
     }
+    await cacheSet(cacheKey, unique);
   }
   return unique;
 }
