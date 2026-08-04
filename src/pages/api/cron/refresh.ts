@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { refreshDailySnapshot } from "@/lib/snapshot";
+import { refreshAllSnapshots } from "@/lib/snapshot";
 import { config } from "@/lib/config";
 
 export const prerender = false;
@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request, url }) => {
   }
 
   try {
-    const count = await refreshDailySnapshot();
+    const count = await refreshAllSnapshots();
     return json({ ok: true, stories: count });
   } catch (error) {
     return json(

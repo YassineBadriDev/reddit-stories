@@ -1,0 +1,49 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { categories } from "@/lib/categories";
+import { breadcrumbSchema } from "@/lib/seo/schemas";
+
+export const prerender = false;
+
+const schemas = [
+  breadcrumbSchema([
+    { name: "Reddit Stories", url: "/" },
+    { name: "Categories", url: "/categories" },
+  ]),
+];
+---
+
+<Layout
+  title="Reddit Stories Categories — Browse by Topic"
+  description="Browse reddit stories by category — funny, scary, creepy, crazy, and more. Find your next favorite reddit story to read."
+  path="/categories"
+  schemas={schemas}
+>
+  <section class="hero">
+    <p class="kicker">Browse by topic</p>
+    <h1>Reddit Stories <span class="accent">Categories</span></h1>
+    <p>
+      Pick a category and dive into reddit's best storytelling — funny, scary,
+      creepy, crazy, true crime, and everything in between.
+    </p>
+  </section>
+
+  <div class="wrap">
+    <div class="section-head">
+      <h2>All categories</h2>
+      <span class="meta">{categories.length} categories</span>
+    </div>
+
+    <div class="story-grid">
+      {categories.map((category) => (
+        <a class="story-card" href={`/${category.slug}`}>
+          <h3>{category.name}</h3>
+          <p>{category.description}</p>
+          <span class="story-card__foot">
+            <span class="up">Read stories &rarr;</span>
+          </span>
+        </a>
+      ))}
+    </div>
+  </div>
+</Layout>

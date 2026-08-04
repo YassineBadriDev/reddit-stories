@@ -1,0 +1,84 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import StoryCard from "@/components/StoryCard.astro";
+import NewsletterForm from "@/components/NewsletterForm.astro";
+import { categoryBySlug } from "@/lib/categories";
+import { fetchCategoryStories } from "@/lib/scraper";
+import { breadcrumbSchema } from "@/lib/seo/schemas";
+
+export const prerender = false;
+
+const slug = Astro.params.category ?? "";
+const category = categoryBySlug(slug);
+
+if (!category) {
+  Astro.response.status = 404;
+}
+
+const stories = category ? await fetchCategoryStories(category) : [];
+const schemas = category
+  ? [
+      breadcrumbSchema([
+        { name: "Reddit Stories", url: "/" },
+        { name: "Categories", url: "/categories" },
+        { name: category.name, url: `/${category.slug}` },
+      ]),
+    ]
+  : [];
+---
+
+<Layout
+  title={category ? `${category.name} — Reddit Stories` : "Category not found"}
+  description={category?.description ?? "This category could not be found."}
+  path={category ? `/${category.slug}` : "/404"}
+  schemas={schemas}
+>
+  {category ? (
+    <>
+      <section class="hero">
+        <p class="kicker">Category</p>
+        <h1>{category.name}</h1>
+        <p>{category.description}</p>
+      </section>
+
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Top stories in {category.name}</h2>
+          <span class="meta">
+            {stories.length} story{stories.length === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        {stories.length > 0 ? (
+          <div class="story-grid">
+            {stories.map((story, index) => (
+              <StoryCard story={story} rank={index + 1} />
+            ))}
+          </div>
+        ) : (
+          <div class="story-grid">
+            <p>
+              We couldn't load stories for this category right now. Please check
+              back in a few minutes.
+            </p>
+          </div>
+        )}
+
+        <NewsletterForm id="newsletter" />
+      </div>
+    </>
+  ) : (
+    <article class="reading">
+      <h1>This category could not be found</h1>
+      <p>
+        The category you're looking for doesn't exist. Browse all our reddit
+        story categories to find what you're after.
+      </p>
+      <p>
+        <a class="btn btn--primary" href="/categories">
+          Browse all categories
+        </a>
+      </p>
+    </article>
+  )}
+</Layout>

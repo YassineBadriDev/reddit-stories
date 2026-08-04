@@ -1,5 +1,5 @@
 import { handle as cfHandle } from "@astrojs/cloudflare/handler";
-import { refreshDailySnapshot } from "@/lib/snapshot";
+import { refreshAllSnapshots } from "@/lib/snapshot";
 
 interface Ctx {
   waitUntil(p: Promise<unknown>): void;
@@ -17,8 +17,8 @@ export default {
   },
   async scheduled(_controller: unknown, _env: unknown, ctx: Ctx) {
     ctx.waitUntil(
-      refreshDailySnapshot().catch((error) => {
-        console.error("daily snapshot refresh failed", error);
+      refreshAllSnapshots().catch((error) => {
+        console.error("snapshot refresh failed", error);
       })
     );
   },

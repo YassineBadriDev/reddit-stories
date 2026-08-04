@@ -48,9 +48,13 @@ export async function snapshotSet<T>(name: string, data: T): Promise<void> {
 
 // Merges a fresh scrape of the feed into the stored archive and returns the
 // merged list (fresh stories plus retained older ones), pruned to the rolling
-// window and cap.
-export async function mergeStoriesIntoSnapshot(fresh: Story[]): Promise<Story[]> {
-  const previous = (await readRaw<Story[]>(SNAPSHOT_STORIES_KEY))?.data ?? [];
+// window and cap. `name` is the snapshot key (e.g. the main feed or a
+// `category:<slug>` feed).
+export async function mergeStoriesIntoSnapshot(
+  name: string,
+  fresh: Story[]
+): Promise<Story[]> {
+  const previous = (await readRaw<Story[]>(name))?.data ?? [];
   const byId = new Map<string, Story>();
   for (const story of previous) byId.set(story.id, story);
   for (const story of fresh) byId.set(story.id, story);
@@ -61,15 +65,54 @@ export async function mergeStoriesIntoSnapshot(fresh: Story[]): Promise<Story[]>
     .sort((a, b) => b.score - a.score)
     .slice(0, ARCHIVE_MAX_STORIES);
 
-  await snapshotSet(SNAPSHOT_STORIES_KEY, merged);
+  await snapshotSet(name, merged);
   return merged;
 }
 
-// Forces a fresh scrape of the daily feed and persists it as the snapshot.
-// Used by the worker's `scheduled` cron trigger and by the manual refresh
-// endpoint. Returns the number of stories stored.
-export async function refreshDailySnapshot(): Promise<number> {
-  const { fetchStories } = await import("@/lib/scraper");
-  const stories = await fetchStories({ force: true });
-  return stories.length;
+// Forces a fresh scrape of the main feed and every category feed and persists
+// them as snapshots. Used by the worker's `scheduled` cron trigger and by the
+// manual refresh endpoint. Returns the total number of stories stored.
+export async function refreshAllSnapshots(): Promise<number> {
+  const { fetchStories, fetchCategoryStories } = await import("@/lib/scraper");
+  const { categories } = await import("@/lib/categories");
+
+  const tasks = [
+    { label: "main", run: () => fetchStories({ force: true }) },
+    ...categories.map((category) => ({
+      label: category.slug,
+      run: () => fetchCategoryStories(category, { force: true }),
+    })),
+  ];
+
+  // Scrape in small, paced batches to avoid tripping the mirror APIs' rate
+  // limits (a burst of parallel fetches gets 429'd).
+  const counts = await mapLimit(tasks, 2, async (task) => {
+    const count = await task
+      .run()
+      .then((stories) => stories.length)
+      .catch(() => 0);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    return count;
+  });
+  return counts.reduce((total, count) => total + count, 0);
+}
+
+async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let index = 0;
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    async () => {
+      while (index < items.length) {
+        const i = index++;
+        results[i] = await fn(items[i]);
+      }
+    }
+  );
+  await Promise.all(workers);
+  return results;
 }

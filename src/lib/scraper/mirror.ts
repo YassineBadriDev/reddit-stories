@@ -38,36 +38,44 @@ interface MirrorComment {
 const ARCTIC_BASE = "https://arctic-shift.photon-reddit.com";
 const PULLPUSH_BASE = "https://api.pullpush.io";
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20000);
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        "user-agent": config.redditUserAgent,
-        accept: "application/json",
-      },
-    });
-  } catch {
-    throw new ScraperError("network", `Mirror request failed: ${url}`);
-  } finally {
-    clearTimeout(timer);
-  }
-  if (!response.ok) {
+async function fetchJson<T>(url: string, retries = 2): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          "user-agent": config.redditUserAgent,
+          accept: "application/json",
+        },
+      });
+    } catch {
+      throw new ScraperError("network", `Mirror request failed: ${url}`);
+    } finally {
+      clearTimeout(timer);
+    }
+    if (response.ok) {
+      try {
+        return (await response.json()) as T;
+      } catch {
+        throw new ScraperError("parse", "Mirror response was not valid JSON");
+      }
+    }
     if (response.status === 404) {
       throw new ScraperError("not_found", `Mirror not found (${response.status})`);
+    }
+    // Arctic Shift and PullPush rate limit bursts; back off and retry a few
+    // times before failing over to the other provider.
+    if (response.status === 429 && attempt < retries) {
+      await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+      continue;
     }
     if (response.status === 429) {
       throw new ScraperError("rate_limited", `Mirror rate limited (${response.status})`);
     }
     throw new ScraperError("network", `Mirror status ${response.status}`);
-  }
-  try {
-    return (await response.json()) as T;
-  } catch {
-    throw new ScraperError("parse", "Mirror response was not valid JSON");
   }
 }
 

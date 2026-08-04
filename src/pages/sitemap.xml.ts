@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { config } from "@/lib/config";
 import { fetchStories } from "@/lib/scraper";
+import { categories } from "@/lib/categories";
 
 export const prerender = false;
 
@@ -14,7 +15,7 @@ function xmlEscape(text: string): string {
 
 export const GET: APIRoute = async () => {
   const siteUrl = config.siteUrl;
-  const staticPaths = ["/", "/search", "/privacy", "/terms", "/contact", "/disclaimer"];
+  const staticPaths = ["/", "/categories", "/search", "/privacy", "/terms", "/contact", "/disclaimer"];
 
   let storyUrls = "";
   try {
@@ -36,9 +37,17 @@ export const GET: APIRoute = async () => {
     )
     .join("\n");
 
+  const categoryUrls = categories
+    .map(
+      (category) =>
+        `  <url><loc>${siteUrl}/${category.slug}</loc><changefreq>daily</changefreq><priority>0.8</priority></url>`
+    )
+    .join("\n");
+
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticUrls}
+${categoryUrls}
 ${storyUrls}
 </urlset>`;
 

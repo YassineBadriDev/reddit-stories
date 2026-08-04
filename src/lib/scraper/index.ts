@@ -11,6 +11,7 @@ import {
 import { fetchMirrorListing, fetchMirrorPost, fetchMirrorComments } from "./mirror";
 import { fetchJsonEscalated } from "@scraper-native";
 import { snapshotGet, snapshotSet, mergeStoriesIntoSnapshot, SNAPSHOT_STORIES_KEY } from "@/lib/snapshot";
+import type { Category } from "@/lib/categories";
 import type { RedditListing, Story, StoryComment, StoryDetail } from "./types";
 
 export async function fetchStories(options?: {
@@ -44,6 +45,50 @@ export async function fetchStories(options?: {
     }
   }
 
+  const unique = await scrapeFeed(subreddits, sort, limit);
+
+  if (unique.length > 0) {
+    if (isDefaultFeed) {
+      const archive = await mergeStoriesIntoSnapshot(SNAPSHOT_STORIES_KEY, unique);
+      await cacheSet(cacheKey, archive);
+      return archive;
+    }
+    await cacheSet(cacheKey, unique);
+  }
+  return unique;
+}
+
+export async function fetchCategoryStories(
+  category: Category,
+  options?: { force?: boolean }
+): Promise<Story[]> {
+  const snapshotKey = `category:${category.slug}`;
+  const cacheKey = `stories:cat:${category.slug}:${category.sort}:${category.limit}`;
+
+  if (!options?.force) {
+    const cached = await cacheGet<Story[]>(cacheKey);
+    if (cached) return cached;
+    const snap = await snapshotGet<Story[]>(snapshotKey);
+    if (snap) {
+      void cacheSet(cacheKey, snap);
+      return snap;
+    }
+  }
+
+  const unique = await scrapeFeed(category.subreddits, category.sort, category.limit);
+  if (unique.length > 0) {
+    const archive = await mergeStoriesIntoSnapshot(snapshotKey, unique);
+    await cacheSet(cacheKey, archive);
+    return archive;
+  }
+  return unique;
+}
+
+async function scrapeFeed(
+  subreddits: string[],
+  sort: "top" | "hot" | "new",
+  limit: number
+): Promise<Story[]> {
   const mirrorOnly = config.scraperSource === "mirror";
   const results = await Promise.allSettled(
     subreddits.map(async (sub) => {
@@ -69,7 +114,7 @@ export async function fetchStories(options?: {
   }
 
   const seen = new Set<string>();
-  const unique = stories
+  return stories
     .sort((a, b) => b.score - a.score)
     .filter((story) => {
       if (seen.has(story.id)) return false;
@@ -77,16 +122,6 @@ export async function fetchStories(options?: {
       return true;
     })
     .slice(0, limit * 2);
-
-  if (unique.length > 0) {
-    if (isDefaultFeed) {
-      const archive = await mergeStoriesIntoSnapshot(unique);
-      await cacheSet(cacheKey, archive);
-      return archive;
-    }
-    await cacheSet(cacheKey, unique);
-  }
-  return unique;
 }
 
 export async function fetchStoryById(
