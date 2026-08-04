@@ -19,6 +19,8 @@ data/*.json
 *.log
 *.log.*
 npm-debug.log*
+server.log
+server.err
 wrangler-dev.*
 
 # wrangler

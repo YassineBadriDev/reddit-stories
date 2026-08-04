@@ -25,18 +25,31 @@ or set `HOSTING=…` and run `npm run build`):
 | Platform | Build | Output | Run |
 | --- | --- | --- | --- |
 | Node | `npm run build:node` | `dist/` (server + client) | `npm start` (or `node dist/server/entry.mjs`) |
-| Cloudflare Pages | `npm run build:cf` | `dist/` (server + client) | `wrangler pages deploy dist` |
+| Cloudflare Workers | `npm run build:cf` | `dist/` (server + client) | `npx wrangler deploy --config dist/server/wrangler.json` |
 | Vercel | `npm run build:vercel` | `.vercel/output/` | `vercel deploy` |
 
 Notes per platform:
 
-- **Cloudflare**: set build command `npm run build:cf`, output directory `dist`,
-  environment variables `SITE_URL`, `RESEND_API_KEY`, `CRON_SECRET`, etc. in
-  the Pages dashboard. There is **no filesystem**: storage falls back to an
-  in-memory backend (ephemeral per isolate) and the scraper defaults to
-  `SCRAPER_SOURCE=mirror`, `SCRAPER_MODE=http` (the native/browser tiers and
-  sharp are not bundled). Newsletter subscribers should rely on the Resend
-  audience (`RESEND_AUDIENCE_ID`) for durable storage.
+- **Cloudflare**: this adapter (`@astrojs/cloudflare` ≥13) targets **Cloudflare
+  Workers**, not Pages — deploying the output to a Pages project yields the
+  Cloudflare placeholder 404. Deploy as a Worker:
+  ```bash
+  npx wrangler login
+  npm run build:cf
+  npx wrangler deploy --config dist/server/wrangler.json
+  ```
+  Non-secret env vars are defined in `wrangler.jsonc` at the repo root (merged
+  into the build output automatically). Secrets are set separately:
+  ```bash
+  npx wrangler secret put RESEND_API_KEY
+  npx wrangler secret put CRON_SECRET
+  ```
+  There is **no filesystem**: storage falls back to an in-memory backend
+  (ephemeral per isolate) and the scraper runs in `mirror` + `http` mode by
+  default (the native/browser tiers and sharp are not bundled). Newsletter
+  subscribers should rely on the Resend audience (`RESEND_AUDIENCE_ID`) for
+  durable storage. The `SESSION` KV + `IMAGES` bindings are auto-provisioned on
+  deploy and are unused unless Astro sessions/images bindings are used.
 - **Vercel**: build command `npm run build:vercel`; Vercel auto-detects
   `.vercel/output`. Disk storage uses `/tmp` (`DATA_DIR=/tmp/data`).
 - **Node**: use a process manager (systemd/pm2), container, or
@@ -114,6 +127,7 @@ src/
 │   ├── seo/           # site.ts (entity), schemas.ts (JSON-LD builders)
 │   ├── newsletter/    # store.ts, send.ts, digest.ts
 │   ├── config.ts      # env-driven config
+│   ├── cf-env.ts      # cloudflare:workers env (aliased per platform)
 │   └── env.ts         # platform detection (isCloudflare/isVercel)
 └── pages/
     ├── index.astro            # feed ("Reddit Stories" keyword page)

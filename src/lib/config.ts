@@ -1,18 +1,16 @@
 import { isCloudflare } from "@/lib/env";
+import runtimeBindings from "@cf-env";
 
 const nodeEnv = typeof process !== "undefined" ? process.env : {};
 const astroEnv = (import.meta.env ?? {}) as Record<string, string | undefined>;
 
-// Runtime env overrides (e.g. Cloudflare worker bindings injected per request
-// via middleware). These take precedence over import.meta.env and process.env.
+// Runtime env overrides. On Cloudflare these come from the worker's vars and
+// secrets via `cloudflare:workers` (aliased to process.env on Node/Vercel).
+// They take precedence over import.meta.env and process.env.
 const runtime = new Map<string, string>();
 
-export function applyRuntimeEnv(
-  record: Record<string, string | undefined>
-): void {
-  for (const [key, value] of Object.entries(record)) {
-    if (value !== undefined) runtime.set(key, value);
-  }
+for (const [key, value] of Object.entries(runtimeBindings)) {
+  if (value !== undefined) runtime.set(key, value);
 }
 
 function env(key: string): string | undefined {

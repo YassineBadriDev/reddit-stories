@@ -5,7 +5,8 @@
     "paths": {
       "@/*": ["src/*"],
       "@storage-backend": ["src/lib/storage/memory.ts"],
-      "@scraper-native": ["src/lib/scraper/native.ts"]
+      "@scraper-native": ["src/lib/scraper/native.ts"],
+      "@cf-env": ["src/lib/cf-env.node.ts"]
     },
     "moduleResolution": "bundler",
     "verbatimModuleSyntax": true,

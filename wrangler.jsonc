@@ -1,0 +1,22 @@
+{
+  // Cloudflare Workers configuration (merged into the build output by
+  // @astrojs/cloudflare). Non-secret vars only — use
+  // `npx wrangler secret put <NAME>` for secrets (RESEND_API_KEY, CRON_SECRET).
+  "name": "reddit-stories",
+  "compatibility_date": "2026-04-15",
+  "vars": {
+    "SITE_URL": "https://redditstories.org",
+    "SITE_NAME": "Reddit Stories",
+    "SITE_TAGLINE": "Reddit stories, in one place",
+    "CONTACT_EMAIL": "hello@redditstories.org",
+    "SUBREDDITS": "stories,RedditStoryTime,nosleep",
+    "DEFAULT_SORT": "top",
+    "DEFAULT_LIMIT": "25",
+    "CACHE_TTL_SECONDS": "600",
+    "SCRAPER_MODE": "http",
+    "SCRAPER_SOURCE": "mirror",
+    "MIRROR_PROVIDER": "arctic-shift",
+    "NEWSLETTER_FROM": "Reddit Stories <stories@redditstories.org>",
+    "NEWSLETTER_TO": "hello@redditstories.org"
+  }
+}
