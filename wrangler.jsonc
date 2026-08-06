@@ -16,7 +16,7 @@
     "SITE_TAGLINE": "Reddit stories, in one place",
     "CONTACT_EMAIL": "hello@redditstories.org",
     "SUBREDDITS": "stories,RedditStoryTime,nosleep",
-    "DEFAULT_SORT": "top",
+    "DEFAULT_SORT": "new",
     "DEFAULT_LIMIT": "25",
     "CACHE_TTL_SECONDS": "600",
     "SCRAPER_MODE": "http",

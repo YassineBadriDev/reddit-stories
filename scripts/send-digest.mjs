@@ -10,7 +10,7 @@ const subreddits = (env.SUBREDDITS ?? "stories,RedditStoryTime,nosleep")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-const sort = env.DEFAULT_SORT ?? "top";
+const sort = env.DEFAULT_SORT ?? "new";
 const limit = Number(env.DEFAULT_LIMIT ?? "25");
 const userAgent =
   env.REDDIT_USER_AGENT ?? "redditstories.org/0.1 by redditstories.org";

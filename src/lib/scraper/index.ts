@@ -33,29 +33,44 @@ export async function fetchStories(options?: {
 
   const cacheKey = `stories:${subreddits.join(",")}:${sort}:${limit}`;
 
+  let stories: Story[] | undefined;
   if (!options?.force) {
     const cached = await cacheGet<Story[]>(cacheKey);
-    if (cached) return cached;
-    if (isDefaultFeed) {
+    if (cached) stories = cached;
+    else if (isDefaultFeed) {
       const snap = await snapshotGet<Story[]>(SNAPSHOT_STORIES_KEY);
       if (snap) {
         void cacheSet(cacheKey, snap);
-        return snap;
+        stories = snap;
       }
     }
   }
 
-  const unique = await scrapeFeed(subreddits, sort, limit);
-
-  if (unique.length > 0) {
-    if (isDefaultFeed) {
-      const archive = await mergeStoriesIntoSnapshot(SNAPSHOT_STORIES_KEY, unique);
-      await cacheSet(cacheKey, archive);
-      return archive;
+  if (!stories) {
+    const unique = await scrapeFeed(subreddits, sort, limit);
+    if (unique.length > 0) {
+      if (isDefaultFeed) {
+        const archive = await mergeStoriesIntoSnapshot(SNAPSHOT_STORIES_KEY, unique);
+        await cacheSet(cacheKey, archive);
+        stories = archive;
+      } else {
+        await cacheSet(cacheKey, unique);
+        stories = unique;
+      }
+    } else {
+      stories = unique;
     }
-    await cacheSet(cacheKey, unique);
   }
-  return unique;
+
+  return sortStories(stories, sort);
+}
+
+function sortStories(stories: Story[], sort: "top" | "hot" | "new"): Story[] {
+  // The snapshot archive is stored by score; re-sort so "new" actually
+  // surfaces the latest stories first.
+  return sort === "new"
+    ? [...stories].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    : [...stories].sort((a, b) => b.score - a.score);
 }
 
 export async function fetchCategoryStories(
