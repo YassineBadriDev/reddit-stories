@@ -1,0 +1,122 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import StoryCard from "@/components/StoryCard.astro";
+import NewsletterForm from "@/components/NewsletterForm.astro";
+import { fetchStories } from "@/lib/scraper";
+import { itemListSchema, breadcrumbSchema } from "@/lib/seo/schemas";
+
+type FeedSort = "new" | "top" | "hot";
+
+interface Props {
+  sort: FeedSort;
+  path: string;
+}
+
+const { sort, path } = Astro.props;
+
+const feeds: Record<
+  FeedSort,
+  { label: string; heading: string; title: string; description: string; href: string }
+> = {
+  new: {
+    label: "Latest",
+    heading: "Latest Reddit Stories",
+    title: "Latest Reddit Stories — Reddit Stories",
+    description:
+      "Read the newest reddit stories posted today, fresh from Reddit's biggest story subreddits. Updated daily.",
+    href: "/latest-reddit-stories",
+  },
+  top: {
+    label: "Top",
+    heading: "Top Reddit Stories",
+    title: "Top Reddit Stories — Reddit Stories",
+    description:
+      "Browse the top reddit stories of the day, ranked by upvotes from Reddit's biggest story communities.",
+    href: "/top-reddit-stories",
+  },
+  hot: {
+    label: "Trending",
+    heading: "Trending Reddit Stories",
+    title: "Trending Reddit Stories — Reddit Stories",
+    description:
+      "Follow trending reddit stories right now — the posts rising fastest across Reddit's story subreddits.",
+    href: "/trending-reddit-stories",
+  },
+};
+
+const feed = feeds[sort];
+const stories = await fetchStories({ sort });
+const isHome = path === "/";
+
+const breadcrumbs = isHome
+  ? breadcrumbSchema([{ name: "Home", url: "/" }])
+  : breadcrumbSchema([
+      { name: "Home", url: "/" },
+      { name: feed.heading, url: path },
+    ]);
+
+const schemas = [itemListSchema(stories, path), breadcrumbs];
+---
+
+<Layout
+  title={isHome ? "Reddit Stories — Best Reddit Stories to Read" : feed.title}
+  description={isHome ? "Find the best reddit stories in one place. Read top, latest, and trending reddit stories from the biggest story subreddits — updated daily." : feed.description}
+  path={path}
+  schemas={schemas}
+>
+  {isHome ? (
+    <section class="hero">
+      <p class="kicker">Know where the story takes you</p>
+      <h1>Reddit <span class="accent">Stories</span></h1>
+      <p>
+        Looking for the best reddit stories? We curate the top reddit stories
+        from Reddit's biggest story communities so you can read them all in one
+        place — free, and updated daily.
+      </p>
+    </section>
+  ) : (
+    <section class="hero">
+      <p class="kicker">Reddit Stories</p>
+      <h1>{feed.heading}</h1>
+      <p>{feed.description}</p>
+    </section>
+  )}
+
+  <div class="wrap">
+    <nav class="tabs" aria-label="Sort stories">
+      {(["new", "top", "hot"] as const).map((value) => (
+        <a
+          class="tab"
+          href={feeds[value].href}
+          aria-current={sort === value ? "true" : undefined}
+        >
+          {feeds[value].label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="section-head">
+      <h2>{feed.heading}</h2>
+      <span class="meta">
+        {stories.length} {stories.length === 1 ? "story" : "stories"} today
+      </span>
+    </div>
+
+    {stories.length > 0 ? (
+      <div class="story-grid">
+        {stories.map((story, index) => (
+          <StoryCard story={story} rank={index + 1} />
+        ))}
+      </div>
+    ) : (
+      <div class="story-grid">
+        <p>
+          We couldn't load reddit stories right now. Please check back in a few
+          minutes.
+        </p>
+      </div>
+    )}
+
+    <NewsletterForm id="newsletter" />
+  </div>
+</Layout>

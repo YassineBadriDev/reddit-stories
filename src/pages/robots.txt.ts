@@ -7,7 +7,6 @@ const rules = `User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin/
-Disallow: /*?sort=
 Disallow: /*?sub=
 Disallow: /search?*
 

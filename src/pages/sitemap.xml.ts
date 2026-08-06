@@ -15,6 +15,7 @@ function xmlEscape(text: string): string {
 
 export const GET: APIRoute = async () => {
   const siteUrl = config.siteUrl;
+  const feedPaths = ["/latest-reddit-stories", "/top-reddit-stories", "/trending-reddit-stories"];
   const staticPaths = ["/", "/categories", "/search", "/privacy", "/terms", "/contact", "/disclaimer"];
 
   let storyUrls = "";
@@ -37,6 +38,13 @@ export const GET: APIRoute = async () => {
     )
     .join("\n");
 
+  const feedUrls = feedPaths
+    .map(
+      (path) =>
+        `  <url><loc>${siteUrl}${path}</loc><changefreq>daily</changefreq><priority>0.9</priority></url>`
+    )
+    .join("\n");
+
   const categoryUrls = categories
     .map(
       (category) =>
@@ -47,6 +55,7 @@ export const GET: APIRoute = async () => {
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticUrls}
+${feedUrls}
 ${categoryUrls}
 ${storyUrls}
 </urlset>`;
