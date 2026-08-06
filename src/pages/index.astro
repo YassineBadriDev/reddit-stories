@@ -53,7 +53,7 @@ const schemas = [
 
   <div class="wrap">
     <nav class="tabs" aria-label="Sort stories">
-      {(["top", "hot", "new"] as const).map((value) => (
+      {(["new", "top", "hot"] as const).map((value) => (
         <a
           class="tab"
           href={`/?sort=${value}`}
