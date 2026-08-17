@@ -28,8 +28,10 @@ export async function fetchStories(options?: {
 
   const isDefaultFeed =
     subreddits.join(",") === config.subreddits.join(",") &&
-    sort === config.defaultSort &&
+    (sort === config.defaultSort || sort === ("all" as any)) &&
     limit === config.defaultLimit;
+
+  const useSnapshot = isDefaultFeed;
 
   const cacheKey = `stories:${subreddits.join(",")}:${sort}:${limit}`;
 
@@ -37,7 +39,7 @@ export async function fetchStories(options?: {
   if (!options?.force) {
     const cached = await cacheGet<Story[]>(cacheKey);
     if (cached) stories = cached;
-    else if (isDefaultFeed) {
+    else if (useSnapshot) {
       const snap = await snapshotGet<Story[]>(SNAPSHOT_STORIES_KEY);
       if (snap) {
         void cacheSet(cacheKey, snap);
@@ -47,9 +49,9 @@ export async function fetchStories(options?: {
   }
 
   if (!stories) {
-    const unique = await scrapeFeed(subreddits, sort, limit);
+    const unique = await scrapeFeed(subreddits, sort === ("all" as any) ? config.defaultSort : sort, limit);
     if (unique.length > 0) {
-      if (isDefaultFeed) {
+      if (useSnapshot) {
         const archive = await mergeStoriesIntoSnapshot(SNAPSHOT_STORIES_KEY, unique);
         await cacheSet(cacheKey, archive);
         stories = archive;
@@ -65,12 +67,13 @@ export async function fetchStories(options?: {
   return sortStories(stories, sort);
 }
 
-function sortStories(stories: Story[], sort: "top" | "hot" | "new"): Story[] {
+function sortStories(stories: Story[], sort: "top" | "hot" | "new" | "all"): Story[] {
   // The snapshot archive is stored by score; re-sort so "new" actually
   // surfaces the latest stories first.
-  return sort === "new"
-    ? [...stories].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    : [...stories].sort((a, b) => b.score - a.score);
+  if (sort === "new") {
+    return [...stories].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+  return [...stories].sort((a, b) => b.score - a.score);
 }
 
 export async function fetchCategoryStories(

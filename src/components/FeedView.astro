@@ -53,10 +53,10 @@ const feeds: Record<
 };
 
 const feed = feeds[sort];
-const allStories = await fetchStories({ sort });
+const isAll = sort === "all";
+const allStories = await fetchStories({ sort: isAll ? "new" : sort });
 const today = new Date();
 today.setHours(0, 0, 0, 0);
-const isAll = sort === "all";
 const stories = isAll ? allStories : allStories.filter(
   (s) => new Date(s.createdAt) >= today
 );
