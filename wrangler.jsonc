@@ -9,7 +9,7 @@
   // Durable store for the once-a-day story snapshot (auto-provisioned on deploy).
   "kv_namespaces": [{ "binding": "STORY_CACHE" }],
   // Refresh the story snapshot twice a day: 03:00 and 15:00 UTC.
-  "triggers": { "crons": ["0 3,15 * * *"] },
+  "triggers": { "crons": ["0 14 * * *"] },
   "vars": {
     "SITE_URL": "https://redditstories.org",
     "SITE_NAME": "Reddit Stories",
