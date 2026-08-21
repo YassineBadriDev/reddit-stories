@@ -60,10 +60,22 @@ export async function mergeStoriesIntoSnapshot(
   for (const story of fresh) byId.set(story.id, story);
 
   const cutoff = Date.now() - ARCHIVE_MAX_AGE_SECONDS * 1000;
-  const merged = [...byId.values()]
-    .filter((story) => Date.parse(story.createdAt) >= cutoff)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, ARCHIVE_MAX_STORIES);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const eligible = [...byId.values()].filter(
+    (story) => Date.parse(story.createdAt) >= cutoff
+  );
+
+  const todayStories = eligible.filter(
+    (story) => Date.parse(story.createdAt) >= todayStart.getTime()
+  );
+  const olderStories = eligible
+    .filter((story) => Date.parse(story.createdAt) < todayStart.getTime())
+    .sort((a, b) => b.score - a.score);
+
+  const remaining = Math.max(0, ARCHIVE_MAX_STORIES - todayStories.length);
+  const merged = [...todayStories, ...olderStories.slice(0, remaining)];
 
   await snapshotSet(name, merged);
   return merged;

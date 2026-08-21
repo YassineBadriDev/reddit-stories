@@ -57,9 +57,12 @@ const isAll = sort === "all";
 const allStories = await fetchStories({ sort: isAll ? "new" : sort });
 const today = new Date();
 today.setHours(0, 0, 0, 0);
-const stories = isAll ? allStories : allStories.filter(
+const todayStories = isAll ? allStories : allStories.filter(
   (s) => new Date(s.createdAt) >= today
 );
+const stories = todayStories.length > 0 || isAll
+  ? todayStories
+  : allStories;
 const isHome = path === "/";
 
 const breadcrumbs = isHome
@@ -112,7 +115,7 @@ const schemas = [itemListSchema(stories, path), breadcrumbs];
     <div class="section-head">
       <h2>{feed.heading}</h2>
       <span class="meta">
-        {stories.length} {stories.length === 1 ? "story" : "stories"}{isAll ? "" : " today"}
+        {stories.length} {stories.length === 1 ? "story" : "stories"}{isAll || todayStories.length === 0 ? "" : " today"}
       </span>
     </div>
 
