@@ -1,7 +1,4 @@
 ---
-import FeedView from "@/components/FeedView.astro";
-
 export const prerender = false;
+return Astro.redirect("/top-reddit-stories", 301);
 ---
-
-<FeedView sort="new" path="/latest-reddit-stories" />
