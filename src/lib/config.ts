@@ -39,8 +39,8 @@ export const config = {
       .map((s) => s.trim())
       .filter(Boolean);
   },
-  get defaultSort(): "top" | "hot" {
-    return (env("DEFAULT_SORT") ?? "top") as "top" | "hot";
+  get defaultSort(): "top" | "hot" | "new" {
+    return (env("DEFAULT_SORT") ?? "new") as "top" | "hot" | "new";
   },
   get defaultLimit(): number {
     return Number(env("DEFAULT_LIMIT") ?? "25");
