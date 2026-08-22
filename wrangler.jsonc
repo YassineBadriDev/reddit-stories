@@ -6,8 +6,14 @@
   "compatibility_date": "2026-04-15",
   // Custom entrypoint adds a `scheduled` handler (daily cron refresh).
   "main": "./src/worker.ts",
-  // Durable store for the once-a-day story snapshot (auto-provisioned on deploy).
-  "kv_namespaces": [{ "binding": "STORY_CACHE" }],
+  "routes": [
+    { "pattern": "redditstories.org", "zone_name": "redditstories.org", "custom_domain": true },
+    { "pattern": "www.redditstories.org", "zone_name": "redditstories.org", "custom_domain": true }
+  ],
+  "kv_namespaces": [
+    { "binding": "STORY_CACHE", "id": "50d3975da63c4a46bd75c7e4f05c013f" },
+    { "binding": "SESSION", "id": "aec9b5bfdd364f1989fbb83dfa40603c" }
+  ],
   // Refresh the story snapshot twice a day: 03:00 and 15:00 UTC.
   "triggers": { "crons": ["0 14 * * *"] },
   "vars": {
@@ -16,7 +22,7 @@
     "SITE_TAGLINE": "Reddit stories, in one place",
     "CONTACT_EMAIL": "hello@redditstories.org",
     "SUBREDDITS": "stories,RedditStoryTime,nosleep",
-    "DEFAULT_SORT": "new",
+    "DEFAULT_SORT": "top",
     "DEFAULT_LIMIT": "25",
     "CACHE_TTL_SECONDS": "600",
     "SCRAPER_MODE": "http",
